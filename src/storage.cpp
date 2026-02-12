@@ -16,6 +16,7 @@ static const int SALT_SIZE = 16;
 static const int IV_SIZE = 16;
 static const int KEY_SIZE = 32;
 static const int ITERATIONS = 100000;
+static const std::string MAGIC_HEADER = "TOTP_VAULT_V1\n";
 
 std::string get_storage_path() {
     const char* home = std::getenv("HOME");
@@ -107,6 +108,7 @@ std::string decrypt_data(const std::vector<uint8_t>& encrypted, const std::strin
 
 std::string entries_to_string(const std::vector<totp::TOTPEntry>& entries) {
     std::ostringstream oss;
+    oss << MAGIC_HEADER;
     for (const auto& e : entries) {
         oss << e.name << "\t" << e.secret << "\t" << e.time_step << "\n";
     }
@@ -115,7 +117,10 @@ std::string entries_to_string(const std::vector<totp::TOTPEntry>& entries) {
 
 std::vector<totp::TOTPEntry> string_to_entries(const std::string& data) {
     std::vector<totp::TOTPEntry> entries;
-    std::istringstream iss(data);
+    if (data.substr(0, MAGIC_HEADER.length()) != MAGIC_HEADER) {
+        return entries;
+    }
+    std::istringstream iss(data.substr(MAGIC_HEADER.length()));
     std::string line;
 
     while (std::getline(iss, line)) {
@@ -161,7 +166,6 @@ std::vector<totp::TOTPEntry> load_entries(const std::string& password) {
 }
 
 bool verify_password(const std::string& password) {
-    auto entries = load_entries(password);
     std::ifstream file(get_storage_path(), std::ios::binary);
     if (!file) return true;
 
@@ -169,8 +173,11 @@ bool verify_password(const std::string& password) {
                                     std::istreambuf_iterator<char>());
     file.close();
 
+    if (encrypted.size() == 0) return true;
+
     std::string data = decrypt_data(encrypted, password);
-    return !data.empty() || encrypted.size() == 0;
+    return data.length() >= MAGIC_HEADER.length() && 
+           data.substr(0, MAGIC_HEADER.length()) == MAGIC_HEADER;
 }
 
 bool add_entry(const totp::TOTPEntry& entry, const std::string& password) {
