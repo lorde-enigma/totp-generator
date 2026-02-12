@@ -66,7 +66,6 @@ TOTPResult generate_totp(const std::string& secret, int time_step) {
     uint64_t counter = seconds / time_step;
     int time_remaining = time_step - (seconds % time_step);
 
-    // convert counter to big-endian 8 bytes
     std::vector<uint8_t> counter_bytes(8);
     for (int i = 7; i >= 0; --i) {
         counter_bytes[i] = counter & 0xff;
@@ -75,7 +74,6 @@ TOTPResult generate_totp(const std::string& secret, int time_step) {
 
     std::vector<uint8_t> hash = hmac_sha1(key, counter_bytes);
 
-    // dynamic truncation
     int offset = hash[19] & 0x0f;
     uint32_t code = ((hash[offset] & 0x7f) << 24) |
                     ((hash[offset + 1] & 0xff) << 16) |
@@ -84,7 +82,6 @@ TOTPResult generate_totp(const std::string& secret, int time_step) {
 
     code = code % 1000000;
 
-    // format as 6-digit string with leading zeros
     std::ostringstream oss;
     oss << std::setfill('0') << std::setw(6) << code;
 
@@ -122,7 +119,6 @@ void run_generator(const std::string& secret, int time_step) {
             last_code = result.code;
         }
 
-        // build progress bar
         int elapsed = time_step - result.time_remaining;
         int bar_width = 30;
         int filled = (elapsed * bar_width) / time_step;
@@ -141,4 +137,4 @@ void run_generator(const std::string& secret, int time_step) {
     }
 }
 
-} // namespace totp
+}
