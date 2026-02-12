@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cctype>
+#include <cstring>
 
 namespace totp {
 
