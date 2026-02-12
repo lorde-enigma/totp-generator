@@ -1,0 +1,21 @@
+# build artifacts
+obj/
+*.o
+*.a
+*.so
+
+# binary
+totp
+
+# ide/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macos
+.DS_Store
+
+# debug
+*.dSYM/
